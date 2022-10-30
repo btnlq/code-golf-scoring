@@ -52,4 +52,5 @@
 
 .row {
     margin: 3px 0;
+    max-width: 432px;
 }
