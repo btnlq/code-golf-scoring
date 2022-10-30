@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body onload="load()">
+    <div>
+        Computes code.golf scores using <a href="https://github.com/code-golf/code-golf/issues/729">Alternative scoring system #729</a>.
+        <br>
+        The current scoring system uses χ = 1, λ = ∞.
+        <br>
+        "Load from code.golf" button doesn't work due to CORS so you need to download all.json from <a href="https://code.golf/scores/all-holes/all-langs/all">https://code.golf/scores/all-holes/all-langs/all</a> and load it with "Load from file" button.
+    </div>
+    <div class="row">
+        <button type="button" onclick="updateModelFromSite()">Load from code.golf</button>
+        <button onclick="$('loadFile').click()">Load from file</button>
+        <input id="loadFile" type="file" accept=".json" onchange="updateModelFromFile(this)" style="display:none" />
+    </div>
+    <div class="row">
+        <span id="modelState" style="white-space: pre;">Data not loaded</span>
+    </div>
+    <div class="row">
+        <label class="radio">
+            <input type="radio" name="participants" id="radioGolfers" onchange="changed(true)" checked>Golfers
+        </label>
+        <label class="radio">
+            <input type="radio" name="participants" id="radioLangs" onchange="changed(true)">Langs
+        </label>
+    </div>
+    <select id="holeSelect" onchange="changed(true)">
+        <option value="-1">All holes</option>
+    </select>
+    <select id="langSelect" onchange="changed(true)">
+        <option value="-1">All langs</option>
+    </select>
+    <table>
+        <tr id="holeCoefficientRow">
+            <td>Hole coefficient (χ)</td>
+            <td>
+                <input type="range" max="96" id="holeSlider" onchange="changed(true)" oninput="changed(false)">
+            </td>
+            <td id="holeValue">8.00</td>
+        </tr>
+        <tr id="langCoefficientRow">
+            <td>Lang coefficient (λ)</td>
+            <td>
+                <input type="range" max="96" id="langSlider" onchange="changed(true)" oninput="changed(false)">
+            </td>
+            <td id="langValue">8.00</td>
+        </tr>
+    </table>
+    <table id="scoring">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th id="participantColumn">Golfer</th>
+                <th>Points</th>
+                <th>Bytes</th>
+                <th id="solsColumn">Sols</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script src="bit.js"></script>
+    <script src="model.js"></script>
+    <script src="utils.js"></script>
+    <script src="data.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

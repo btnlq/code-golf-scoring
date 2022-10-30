@@ -1,0 +1,55 @@
+#scoring td:nth-child(2),
+#scoring th:nth-child(2) {
+    text-align: start;
+}
+
+#scoring td:nth-child(1),
+#scoring th:nth-child(1),
+#scoring td:nth-child(3),
+#scoring th:nth-child(3),
+#scoring td:nth-child(4),
+#scoring th:nth-child(4),
+#scoring td:nth-child(5),
+#scoring th:nth-child(5) {
+    text-align: end;
+}
+
+#scoring td,
+#scoring th {
+    padding-right: 8px;
+}
+
+.tooltip {
+    border-bottom: 1px dotted black;
+    display: inline-block;
+    position: relative;
+}
+
+.tooltiptext {
+    position: absolute;
+    padding: 5px;
+    background: #444;
+    border: 1px solid #222;
+    border-radius: 6px;
+    visibility: hidden;
+    opacity: 0;
+    box-shadow: -2px 2px 5px rgb(0 0 0 / 20%);
+    transition: opacity 0.3s, visibility 0s;
+    color: white;
+    width: max-content;
+    max-width: 200px;
+    left: 125%;
+    z-index: 1;
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: start;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+.row {
+    margin: 3px 0;
+}
