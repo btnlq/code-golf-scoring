@@ -26,6 +26,13 @@ class Multimap extends Map {
     }
 }
 
+// significance of S_a (the shortest solution among all languages in this hole)
+const ScoringTypes = {
+    Individual: () => 0,
+    Common: () => 1,
+    Bayesian: count => 1/(Math.sqrt(count) + 3),
+};
+
 class Model {
     /**
      * @param {number[][][][]} solutions
@@ -50,27 +57,32 @@ class Model {
             ).join(" ");
 
         this.solutions = solutions; // holes -> langs -> [golferId, size, score]
-        this.holes = holes.map(prettifyName);
-        this.langs = langs.map(prettifyName);
+        this.holes = holes;
+        this.langs = langs;
         this.golfers = golfers;
         this.lastSubmitted = lastSubmitted;
 
-        this.bestSolutions = solutions.map(solutions_h => {
-            const bestSolutions_h = solutions_h.map(solutions_hl => minBy(solutions_hl, 1) || [null, 0, 2/3]);
+        this.prettyHoles = holes.map(prettifyName);
+        this.prettyLangs = langs.map(prettifyName);
+
+        this.bestSolutions = solutions.map(solutions_h => solutions_h.map(solutions_hl => minBy(solutions_hl, 1) || [null, 0, 0]));
+        this.updateSolutionsScores(ScoringTypes.Bayesian);
+    }
+
+    updateSolutionsScores(scoringType) {
+        for (const [h, solutions_h] of this.solutions.entries()) {
+            const bestSolutions_h = this.bestSolutions[h];
             const best_h = min(bestSolutions_h.map(solution => solution[1] || Infinity));
 
-            // computes "score" for all solutions
             for (const [l, solutions_hl] of solutions_h.entries()) {
                 const best_hl = bestSolutions_h[l][1];
-                const coef = 1/(Math.sqrt(solutions_hl.length) + 3);
+                const coef = scoringType(solutions_hl.length);
                 const sb = (1 - coef) * best_hl + coef * best_h;
                 for (const solution of solutions_hl) {
-                    solution.push(sb / solution[1]);
+                    solution[2] = sb / solution[1];
                 }
             }
-
-            return bestSolutions_h;
-        });
+        }
     }
 
     _gLangHoleScores(h, l) {
@@ -123,7 +135,7 @@ class Model {
         const scores = [];
         for (const l of this.langs.keys()) {
             const bestSolutions_l = [...project(this.bestSolutions, l)];
-            const missingHoles = [...this.holes.keys()].filter(h => bestSolutions_l[h][0] == undefined).map(h => this.holes[h]);
+            const missingHoles = [...this.holes.keys()].filter(h => bestSolutions_l[h][0] == undefined).map(h => this.prettyHoles[h]);
             const bytes_l = sum(project(bestSolutions_l, 1));
             const score_l = holeScoring(project(bestSolutions_l, 2));
             scores.push([l, bytes_l, score_l, this.holes.length - missingHoles.length, missingHoles]);
@@ -134,12 +146,21 @@ class Model {
     langsRanking(h) {
         const scoresFn = h.toFixed ? this._lHoleScores : this._lTotalScores;
         const scores = scoresFn.call(this, h);
-        return this._pretty(scores, this.langs);
+        return this._pretty(scores, this.prettyLangs);
     }
 
     _pretty([scores, perfectScore], names, count) {
         const board = nbest(scores, count, (a, b) => b[2] - a[2]);
         const inv = 1000 / perfectScore;
         return board.map(([participantId, size, score, ...rest]) => [names[participantId], size, score * inv, ...rest]);
+    }
+
+    heatMap() {
+        const sortedHs = argsort(this.solutions.map(solutions_h => -sum(project(solutions_h, "length"))));
+        const sortedLs = argsort(this.langs.map((_, l) => -sum(project(project(this.solutions, l), "length"))));
+        const map = sortedHs.map(h => sortedLs.map(l => this.solutions[h][l].length));
+        const holes = sortedHs.map(h => this.prettyHoles[h]);
+        const langs = sortedLs.map(l => this.prettyLangs[l]);
+        return { map, holes, langs };
     }
 }

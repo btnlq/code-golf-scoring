@@ -19,6 +19,8 @@
     padding-right: 8px;
 }
 
+/* Tooltip */
+
 .tooltip {
     border-bottom: 1px dotted black;
     display: inline-block;
@@ -52,5 +54,48 @@
 
 .row {
     margin: 3px 0;
-    max-width: 432px;
+}
+
+/* Modal */
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15vh auto;
+    padding: 15px;
+    border: 1px solid #888;
+    width: fit-content;
+    overflow-y: auto;
+    max-width: 384px;
+    max-height: 70%;
+}
+
+.modal-div {
+    padding: 2px 0;
+}
+
+/* Table */
+
+.heat-map {
+    text-align: end;
+}
+
+.heat-map tr:first-child th {
+    writing-mode: vertical-lr;
+    vertical-align: bottom;
+    width: 20px;
+}
+
+.heat-map tr th:first-child {
+    white-space: nowrap;
 }

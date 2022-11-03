@@ -31,7 +31,10 @@ function pNorm(p) {
 }
 
 function nbest(seq, n, compareFn) {
-    return Array.from(seq).sort(compareFn).slice(0, n);
+    seq = Array.from(seq).sort(compareFn);
+    if (n !== undefined && seq.length > n)
+        seq.length = n;
+    return seq;
 }
 
 function *project(seq, i) {
@@ -48,4 +51,8 @@ function minBy(arr, i) {
             bestX = x;
     }
     return bestX;
+}
+
+function argsort(arr) {
+    return Array.from(arr.keys()).sort((a, b) => arr[a] - arr[b]);
 }
