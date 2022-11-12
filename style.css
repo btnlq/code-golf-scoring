@@ -1,19 +1,21 @@
 /* Tables */
 
-#scoring td:nth-child(2),
-#scoring th:nth-child(2) {
+#scoring td:nth-child(2), /* Golfer/Language */
+#scoring th:nth-child(2),
+#scoring td:nth-child(7), /* Best golfer */
+#scoring th:nth-child(7) {
     text-align: start;
 }
 
-#scoring td:nth-child(1),
+#scoring td:nth-child(1), /* # */
 #scoring th:nth-child(1),
-#scoring td:nth-child(3),
+#scoring td:nth-child(3), /* Points */
 #scoring th:nth-child(3),
-#scoring td:nth-child(4),
+#scoring td:nth-child(4), /* Bytes */
 #scoring th:nth-child(4),
-#scoring td:nth-child(5),
+#scoring td:nth-child(5), /* Sols/Holes */
 #scoring th:nth-child(5),
-#scoring td:nth-child(6),
+#scoring td:nth-child(6), /* Submitted */
 #scoring th:nth-child(6) {
     text-align: end;
 }
@@ -72,6 +74,7 @@
     top: 50%;
     transform: translateY(-50%);
     text-align: start;
+    white-space: normal;
 }
 
 .tooltip:hover .tooltiptext {

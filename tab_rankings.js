@@ -84,11 +84,13 @@ function changed() {
     visible($("holeCoefficientRow"), h == -1);
     visible($("langCoefficientRow"), isGolfers && l == -1);
 
-    const complex = isGolfers ? l == -1 || h == -1 : h == -1;
+    const displayCount = isGolfers ? l == -1 || h == -1 : h == -1;
+    const displayGolfer = !isGolfers && h != -1;
 
     $("participantColumn").textContent = isGolfers ? "Golfer" : "Language";
     $("solsColumn").textContent = isGolfers ? "Sols" : "Holes";
-    display($("solsColumn"), complex);
+    display($("solsColumn"), displayCount);
+    display($("langGolferColumn"), displayGolfer);
 
     if (model == undefined) {
         console.log("Model is not loaded");
@@ -117,7 +119,7 @@ function changed() {
         row.insertCell().innerText = participant;
         row.insertCell().innerText = score.toFixed(2);
         row.insertCell().innerText = bytes.toLocaleString("en-US");
-        if (complex) {
+        if (displayCount) {
             const countText = count.toLocaleString("en-US");
             const cell = row.insertCell();
             if (missing && missing.length > 0) {
@@ -126,10 +128,16 @@ function changed() {
             } else {
                 cell.innerText = countText;
             }
+        } else {
+            row.insertCell().style.display = "none";
         }
 
         const [fullText, prettyText] = prettyDate(submitted);
         row.insertCell().innerHTML = `<span title="${fullText}">${prettyText}</span>`;
+
+        if (displayGolfer) {
+            row.insertCell().innerText = count;
+        }
     }
 }
 

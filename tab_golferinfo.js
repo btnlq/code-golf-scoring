@@ -94,8 +94,12 @@ function updateWall(golfer) {
 
         if (allHoles)
             row.insertCell().innerText = model.prettyHoles[h];
+        else
+            row.insertCell().style.display = "none";
         if (allLangs)
             row.insertCell().innerText = model.prettyLangs[l];
+        else
+            row.insertCell().style.display = "none";
         row.insertCell().innerText = bytes.toLocaleString("en-US");
 
         row.insertCell().innerText = (1000 * score).toFixed();

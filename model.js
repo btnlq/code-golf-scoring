@@ -127,7 +127,7 @@ class Model {
     _lHoleScores(h) {
         const scores = this.bestSolutions[h]
             .filter(solution => solution[0])
-            .map((solution, h) => [h, ...solution.slice(1)]);
+            .map((solution, h) => [h, ...solution.slice(1), this.golfers[solution[0]]]);
         return [scores, 1];
     }
 
@@ -135,7 +135,7 @@ class Model {
         const scores = [];
         for (const l of this.langs.keys()) {
             const bestSolutions_l = [...project(this.bestSolutions, l)];
-            const missingHoles = [...this.holes.keys()].filter(h => bestSolutions_l[h][0] == undefined).map(h => this.prettyHoles[h]);
+            const missingHoles = [...this.holes.keys()].filter(h => bestSolutions_l[h][0] == undefined).map(h => this.prettyHoles[h]).sort();
             const bytes_l = sum(project(bestSolutions_l, 1));
             const submitted_l = max(project(bestSolutions_l, 2));
             const score_l = holeScoring(project(bestSolutions_l, 3));
