@@ -5,128 +5,184 @@
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body onload="load()">
-    <div class="row" style="max-width: 432px;">
-        Computes <a href="https://code.golf/">code.golf</a> rankings using <a href="https://github.com/code-golf/code-golf/issues/729">Alternative scoring system #729</a>.
-        <br>
-        The current scoring system uses χ = 1, λ = ∞.
-        <br>
+    <div class="row text-row">
         "Load from code.golf" button doesn't work due to CORS so you need to download <i>all.json</i> from <a href="https://code.golf/scores/all-holes/all-langs/all">code.golf/scores/all-holes/all-langs/all</a> and load it with "Load from file" button.
     </div>
     <div class="row">
         <button type="button" onclick="updateModelFromSite()">Load from code.golf</button>
-        <button onclick="$('loadFile').click()">Load from file</button>
+        <button onclick="input = $('loadFile'); input.value = null; input.click()">Load from file</button>
         <input id="loadFile" type="file" accept=".json" onchange="updateModelFromFile(this)" style="display: none" />
     </div>
     <div class="row">
         <span id="modelState" style="white-space: pre;">Data is not loaded</span>
     </div>
-    <div class="row">
-        <button id="showHeatMap" onclick="showHeatMap()">Show solution count heatmap</button>
-        <table class="heat-map" id="heatMap" style="display: none">
-            <tbody></tbody>
-        </table>
+    <div class="row tabs">
+        <button id="rankingsButton" class="active" onclick="showTab('rankings')">Rankings</button>
+        <button id="heatMapButton" onclick="showTab('heatMap')">Solution count heatmap</button>
+        <button id="golferInfoButton" onclick="showTab('golferInfo')">Golfer profile</button>
     </div>
-    <div class="row">
-        <label class="radio">
-            <input type="radio" name="participants" id="radioGolfers" onchange="changed()" checked>Golfers
-        </label>
-        <label class="radio">
-            <input type="radio" name="participants" id="radioLangs" onchange="changed()">Langs
-        </label>
-    </div>
-    <select id="holeSelect" onchange="changed()">
-        <option value="-1">All holes</option>
-    </select>
-    <select id="langSelect" onchange="changed()">
-        <option value="-1">All langs</option>
-    </select>
-    <div class="row" id="originalLink">
-        Original ranking: <a href="https://code.golf/">code.golf</a>
-    </div>
-    <div class="row">
-        <label class="radio">
-            <input type="radio" name="scoringType" id="radioIndividual" onchange="changedModel(ScoringTypes.Individual)">Individual
-        </label>
-        <label class="radio">
-            <input type="radio" name="scoringType" id="radioBayesian" onchange="changedModel(ScoringTypes.Bayesian)" checked>Bayesian
-        </label>
-        <label class="radio">
-            <input type="radio" name="scoringType" id="radioCommon" onchange="changedModel(ScoringTypes.Common)">Common
-        </label>
-        <button onclick="openModal($('scoringTypeReference'))">?</button>
-    </div>
-    <table>
-        <tr id="holeCoefficientRow">
-            <td>Hole coefficient (χ)</td>
-            <td>
-                <input type="range" max="96" id="holeSlider">
-            </td>
-            <td>
-                <button>8.00</button>
-            </td>
-        </tr>
-        <tr id="langCoefficientRow">
-            <td>Lang coefficient (λ)</td>
-            <td>
-                <input type="range" max="96" id="langSlider">
-            </td>
-            <td>
-                <button>8.00</button>
-            </td>
-        </tr>
-    </table>
-    <table id="scoring">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th id="participantColumn">Golfer</th>
-                <th>Points</th>
-                <th>Bytes</th>
-                <th id="solsColumn">Sols</th>
+    <div id="rankingsTab">
+        <div class="row text-row">
+            Computes <a href="https://code.golf/">code.golf</a> rankings using <a href="https://github.com/code-golf/code-golf/issues/729">Alternative scoring system #729</a>.
+            <br>
+            The current scoring system uses χ = 1, λ = ∞.
+        </div>
+        <div class="row">
+            <label class="radio">
+                <input type="radio" name="participants" id="radioGolfers" onchange="changed()" checked>Golfers
+            </label>
+            <label class="radio">
+                <input type="radio" name="participants" id="radioLangs" onchange="changed()">Languages
+            </label>
+        </div>
+        <select id="holeSelect" onchange="changed()">
+            <option value="-1">All holes</option>
+        </select>
+        <select id="langSelect" onchange="changed()">
+            <option value="-1">All langs</option>
+        </select>
+        <div class="row" id="originalLink">
+            Original ranking: <a href="https://code.golf/">code.golf</a>
+        </div>
+        <div class="row">
+            <label class="radio">
+                <input type="radio" name="scoringType" id="radioIndividual" onchange="changedScoringType(ScoringTypes.Individual)">Individual
+            </label>
+            <label class="radio">
+                <input type="radio" name="scoringType" id="radioBayesian" onchange="changedScoringType(ScoringTypes.Bayesian)" checked>Bayesian
+            </label>
+            <label class="radio">
+                <input type="radio" name="scoringType" id="radioCommon" onchange="changedScoringType(ScoringTypes.Common)">Common
+            </label>
+            <button onclick="openModal($('scoringTypeReference'))">?</button>
+        </div>
+        <table>
+            <tr id="holeCoefficientRow">
+                <td>Hole coefficient (χ)</td>
+                <td>
+                    <input type="range" max="96" id="holeSlider">
+                </td>
+                <td>
+                    <button>8.00</button>
+                </td>
             </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
-    <div id="numberPicker" class="modal">
-        <div class="modal-content">
-            <div class="modal-div" id="modalHeader"></div>
-            <div class="modal-div">
-                <input id="modalValue" type="number" inputmode="numeric" style="width: 100px;" min="0.01" step="any" required oninput="valueChangedNumberPicker(this)">
-                <button onclick="closeNumberPicker(true)" id="modalOk">OK</button>
-                <button onclick="closeNumberPicker(false)">Cancel</button>
+            <tr id="langCoefficientRow">
+                <td>Lang coefficient (λ)</td>
+                <td>
+                    <input type="range" max="96" id="langSlider">
+                </td>
+                <td>
+                    <button>8.00</button>
+                </td>
+            </tr>
+        </table>
+        <table id="scoring" class="ranking-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th id="participantColumn">Golfer</th>
+                    <th>Points</th>
+                    <th>Bytes</th>
+                    <th id="solsColumn">Sols</th>
+                    <th>Submitted</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <div id="numberPicker" class="modal">
+            <div class="modal-content">
+                <div class="modal-div" id="modalHeader"></div>
+                <div class="modal-div">
+                    <input id="modalValue" type="number" inputmode="numeric" style="width: 100px;" min="0.01" step="any" required oninput="valueChangedNumberPicker(this)">
+                    <button onclick="closeNumberPicker(true)" id="modalOk">OK</button>
+                    <button onclick="closeNumberPicker(false)">Cancel</button>
+                </div>
+                <div class="modal-div" id="modalMessage"></div>
             </div>
-            <div class="modal-div" id="modalMessage"></div>
+        </div>
+        <div id="scoringTypeReference" class="modal">
+            <div class="modal-content">
+                <h4>Informal</h6>
+                    <ul>
+                        <li>Individual &ndash; languages have its own rakings: the shortest solution in any language gets 1000 points.</li>
+                        <li>Common &ndash; languages have common ranking: any score is computed as ratio to the length of the shortest solution among all languages.</li>
+                        <li>Bayesian &ndash; current system.</li>
+                    </ul>
+                    <h4>Formal</h4>
+                    Points = ((1 &minus; k) &times; S + k &times; S<sub>a</sub>) &divide; S<sub>u</sub> &times; 1000, where
+                    <ul>
+                        <li>S<sub>u</sub> is the length of the user's solution.</li>
+                        <li>S is the length of the shortest solution in this language.</li>
+                        <li>S<sub>a</sub> is the length of the shortest solution among all languages.</li>
+                        <li>k is the significance of other languages:
+                            <ul>
+                                <li>Individual &ndash; k = 0</li>
+                                <li>Common &ndash; k = 1</li>
+                                <li>Bayesian &ndash; k = 1 &divide; (&radic;n + 3), where n is the number of solutions in this language.</li>
+                            </ul>
+                        </li>
+                    </ul>
+            </div>
         </div>
     </div>
-    <div id="scoringTypeReference" class="modal">
-        <div class="modal-content">
-            <h4>Informal</h6>
-            <ul>
-                <li>Individual &ndash; languages have its own rakings: the shortest solution in any language gets 1000 points.</li>
-                <li>Common &ndash; languages have common ranking: any score is computed as ratio to the length of the shortest solution among all languages.</li>
-                <li>Bayesian &ndash; current system.</li>
-            </ul>
-            <h4>Formal</h4>
-            Points = ((1 &minus; k) &times; S + k &times; S<sub>a</sub>) &divide; S<sub>u</sub> &times; 1000, where
-            <ul>
-                <li>S<sub>u</sub> is the length of the user's solution.</li>
-                <li>S is the length of the shortest solution in this language.</li>
-                <li>S<sub>a</sub> is the length of the shortest solution among all languages.</li>
-                <li>k is the significance of other languages:
-                    <ul>
-                        <li>Individual &ndash; k = 0</li>
-                        <li>Common &ndash; k = 1</li>
-                        <li>Bayesian &ndash; k = 1 &divide; (&radic;n + 3), where n is the number of solutions in this language.</li>
-                    </ul>
-                </li>
-            </ul>
+    <div id="heatMapTab" style="display: none">
+        <div class="row">
+            <table class="heat-map" id="heatMap">
+                <tbody></tbody>
+            </table>
         </div>
+    </div>
+    <div id="golferInfoTab" style="display: none">
+        <div class="row">
+            <input id="golfer" placeholder="Login" list="golfers" oninput="wallChanged(true)">
+            <datalist id="golfers"></datalist>
+            <span id="golferLogin"></span>
+        </div>
+        <div class="row">
+            <select id="wallHoleSelect" onchange="wallChanged()">
+                <option value="-1">All holes</option>
+            </select>
+            <select id="wallLangSelect" onchange="wallChanged()">
+                <option value="-1">All langs</option>
+            </select>
+            <span id="solutionsCount"></span>
+        </div>
+        <div class="row">
+            <label class="radio">
+                <input type="radio" name="wallOrder" id="radioNew" onchange="wallChanged()" checked>New
+            </label>
+            <label class="radio">
+                <input type="radio" name="wallOrder" id="radioOld" onchange="wallChanged()">Old
+            </label>
+            <label class="radio">
+                <input type="radio" name="wallOrder" id="radioBest" onchange="wallChanged()">Best
+            </label>
+            <label class="radio">
+                <input type="radio" name="wallOrder" id="radioWorst" onchange="wallChanged()">Worst
+            </label>
+        </div>
+        <table id="golferWall" class="ranking-table" style="display: none">
+            <thead>
+                <tr>
+                    <th>Submitted</th>
+                    <th id="wallHoleColumn">Hole</th>
+                    <th id="wallLangColumn">Language</th>
+                    <th>Bytes</th>
+                    <th>Points</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
     </div>
     <script src="bit.js"></script>
     <script src="model.js"></script>
     <script src="utils.js"></script>
     <script src="data.js"></script>
     <script src="main.js"></script>
+    <script src="tab_rankings.js"></script>
+    <script src="tab_heatmap.js"></script>
+    <script src="tab_golferinfo.js"></script>
 </body>
 </html>

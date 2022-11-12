@@ -1,3 +1,5 @@
+/* Tables */
+
 #scoring td:nth-child(2),
 #scoring th:nth-child(2) {
     text-align: start;
@@ -10,13 +12,37 @@
 #scoring td:nth-child(4),
 #scoring th:nth-child(4),
 #scoring td:nth-child(5),
-#scoring th:nth-child(5) {
+#scoring th:nth-child(5),
+#scoring td:nth-child(6),
+#scoring th:nth-child(6) {
     text-align: end;
 }
 
-#scoring td,
-#scoring th {
-    padding-right: 8px;
+#golferWall td:nth-child(2),
+#golferWall th:nth-child(2),
+#golferWall td:nth-child(3),
+#golferWall th:nth-child(3) {
+    text-align: start;
+}
+
+#golferWall td:nth-child(1),
+#golferWall th:nth-child(1),
+#golferWall td:nth-child(4),
+#golferWall th:nth-child(4),
+#golferWall td:nth-child(5),
+#golferWall th:nth-child(5) {
+    text-align: end;
+}
+
+.ranking-table {
+    border-collapse: collapse;
+}
+
+.ranking-table td,
+.ranking-table th {
+    padding-right: 10px;
+    padding-top: 2px;
+    padding-bottom: 2px;
 }
 
 /* Tooltip */
@@ -56,6 +82,10 @@
     margin: 3px 0;
 }
 
+.text-row {
+    max-width: 432px;
+}
+
 /* Modal */
 
 .modal {
@@ -84,7 +114,7 @@
     padding: 2px 0;
 }
 
-/* Table */
+/* Heat map table */
 
 .heat-map {
     text-align: end;
@@ -98,4 +128,23 @@
 
 .heat-map tr th:first-child {
     white-space: nowrap;
+}
+
+/* Tabs */
+
+.tabs button {
+    background-color: inherit;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px;
+    transition: 0.3s;
+}
+
+.tabs button:hover {
+    background-color: #ddd;
+}
+
+.tabs button.active {
+    background-color: #ccc;
 }

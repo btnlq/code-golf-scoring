@@ -98,9 +98,9 @@ class Writer {
     }
 
     // x >= 0
-    writeLong(x) {
-        this.writer.writeGamma(x >> 7);
-        this.writer.write(x & 127, 7);
+    writeLong(x, k) {
+        this.writer.writeGamma(x >> k);
+        this.writer.write(x & (1 << k) - 1, k);
     }
 
     writeString(s) {
@@ -111,7 +111,7 @@ class Writer {
             const c = s.charCodeAt(i);
             const b =
                 97 <= c && c <= 122 ? c - 97 : // 'a'..'z' -> 0..25
-                65 <= c && c <= 90 ? c - 39 : // 'A'..'z' -> 26..51
+                65 <= c && c <= 90 ? c - 39 : // 'A'..'Z' -> 26..51
                 48 <= c && c <= 57 ? c + 4 : // '0'..'9' -> 52..61
                 c == 45 ? 62 : 63; // '-' -> 62
             this.writer.write(b, 6);
@@ -138,8 +138,8 @@ class Reader {
         return this.reader.readGamma();
     }
 
-    readLong() {
-        return (this.reader.readGamma() << 7) | this.read(7);
+    readLong(k) {
+        return (this.reader.readGamma() << k) | this.read(k);
     }
 
     readString() {
@@ -161,40 +161,46 @@ class Reader {
 class EnumWriter {
     constructor() {
         this.map = new Map();
-    }
-
-    put(s) {
-        if (!this.map.has(s))
-            this.map.set(s, this.map.size);
-    }
-
-    writeMap(writer) {
-        writer.writeLong(this.map.size);
-        for (const x of this.map.keys())
-            writer.writeString(x);
-        this.bitLength = 31 - Math.clz32(this.map.size);
+        this.bitLength = 0;
     }
 
     write(writer, s) {
-        const x = this.map.get(s);
-        const extra = (x | (1 << this.bitLength)) < this.map.size;
+        const size = this.map.size;
+        let x = this.map.get(s);
+        if (x == undefined) x = size;
+
+        const extra = (x | (1 << this.bitLength)) <= size;
         writer.write(x, this.bitLength + extra);
+
+        if (x == size) {
+            this.map.set(s, size);
+            if (size + 1 >= (2 << this.bitLength)) {
+                this.bitLength++;
+            }
+            writer.writeString(s);
+        }
     }
 }
 
 class EnumReader {
-    constructor(reader) {
+    constructor() {
         this.arr = [];
-        const length = reader.readLong();
-        for (let i = 0; i < length; i++)
-            this.arr.push(reader.readString());
-        this.bitLength = 31 - Math.clz32(length);
+        this.bitLength = 0;
     }
 
     read(reader) {
+        const size = this.arr.length;
         let x = reader.read(this.bitLength);
-        if (x + (1 << this.bitLength) < this.arr.length)
+
+        if (x + (1 << this.bitLength) <= size)
             x |= reader.read(1) << this.bitLength;
+
+        if (x == size) {
+            this.arr.push(reader.readString());
+            if (size + 1 >= (2 << this.bitLength)) {
+                this.bitLength++;
+            }
+        }
         return x;
     }
 }

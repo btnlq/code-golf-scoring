@@ -1,51 +1,70 @@
-const _dbVersion = 1;
+const _dbVersion = 2;
 
 function packModel(json) {
     const holes = new EnumWriter();
     const langs = new EnumWriter();
-    const sols = new Map();
 
-    for (const sol of json) {
-        if (sol.scoring === "chars")
-            continue;
+    const sols = json.filter(sol => sol.scoring === "bytes");
 
-        // {"hole":"divisors","lang":"python","scoring":"chars","login":"kevinmchung","chars":62,"bytes":62,"submitted":"2018-01-11T15:10:44.775439"}
-        holes.put(sol.hole);
-        langs.put(sol.lang);
-
-        let sols_g = sols.get(sol.login);
-        if (sols_g === undefined) {
-            sols_g = new Map();
-            sols.set(sol.login, sols_g);
-        }
-        let sols_gl = sols_g.get(sol.lang);
-        if (sols_gl === undefined) {
-            sols_gl = [];
-            sols_g.set(sol.lang, sols_gl);
-        }
-        sols_gl.push(sol);
+    for (const sol of sols) {
+        sol.submitted = Date.parse(sol.submitted) / 60000 | 0; // minutes since the Unix epoch
     }
-
-    const lastSubmitted = max(project(json, "submitted"), "")
+    sols.sort((a, b) => a.submitted - b.submitted);
 
     const writer = new Writer();
     writer.writeShort(_dbVersion);
-    writer.writeString(lastSubmitted);
-    holes.writeMap(writer);
-    langs.writeMap(writer);
-    writer.writeLong(sols.size);
-    for (const [golfer, sols_g] of sols) {
-        writer.writeString(golfer);
-        writer.writeShort(sols_g.size - 1);
-        for (const [lang, sols_gl] of sols_g) {
-            langs.write(writer, lang);
-            writer.writeShort(sols_gl.length - 1);
-            for (const sol of sols_gl) {
-                holes.write(writer, sol.hole);
-                writer.writeLong(sol.bytes - 1);
-            }
+    writer.writeLong(sols.length, 7);
+
+    const golfersCache = [];
+    let prevTime = 0;
+    const infos = new Map();
+
+    for (const sol of sols) {
+        // info
+        const g = sol.login;
+        let info = infos.get(g);
+        let newGolfer = info == undefined;
+        if (newGolfer) {
+            infos.set(g, info = [-1, -1]);
         }
+
+        // golfer
+        const id = newGolfer || golfersCache.indexOf(g);
+        writer.write(id != 0, 1);
+        if (id != 0) {
+            writer.writeLong(newGolfer ? 0 : id, 3);
+            if (newGolfer)
+                writer.writeString(g);
+            else
+                golfersCache.splice(id, 1);
+            golfersCache.splice(0, 0, g);
+        }
+
+        // lang
+        const newLang = info[0] != sol.lang;
+        if (!newGolfer)
+            writer.write(newLang, 1);
+        if (newLang) {
+            langs.write(writer, info[0] = sol.lang);
+        }
+
+        // hole
+        const newHole = info[1] != sol.hole;
+        if (!newGolfer && newLang)
+            writer.write(newHole, 1);
+        if (newHole) {
+            holes.write(writer, info[1] = sol.hole);
+        }
+
+        // size
+        writer.writeLong(sol.bytes - 1, 7);
+
+        // timeDiff
+        const curTime = sol.submitted;
+        writer.writeLong(curTime - prevTime, 3);
+        prevTime = curTime;
     }
+
     return writer.toString();
 }
 
@@ -58,30 +77,58 @@ function unpackModel(s) {
         return null;
     }
 
-    const lastSubmitted = reader.readString();
+    const holesReader = new EnumReader();
+    const langsReader = new EnumReader();
 
-    const holesReader = new EnumReader(reader);
-    const langsReader = new EnumReader(reader);
-
-    const holes = holesReader.arr;
-    const langs = langsReader.arr;
     const golfers = [];
+    const golfersCache = [];
+    let submitted = 0;
+    const infos = [];
 
-    const solutions = holes.map(() => langs.map(() => []));
+    const solutions = [];
 
-    const golfersCount = reader.readLong();
-    for (let golferId = 0; golferId < golfersCount; golferId++) {
-        const golfer = reader.readString();
-        golfers.push(golfer);
-        for (let langsCount = reader.readShort() + 1; langsCount > 0; langsCount--) {
-            const lang = langsReader.read(reader);
-            for (let holesCount = reader.readShort() + 1; holesCount > 0; holesCount--) {
-                const hole = holesReader.read(reader);
-                const size = reader.readLong() + 1;
-                solutions[hole][lang].push([golferId, size]);
+    for (let solsCount = reader.readLong(7); solsCount > 0; solsCount--) {
+        // golfer
+        const otherGolfer = reader.read(1);
+        let golferId;
+        if (!otherGolfer) {
+            golferId = golfersCache[0];
+        } else {
+            const id = reader.readLong(3);
+            if (id == 0) {
+                golferId = golfers.length;
+                golfers.push(reader.readString());
+                infos.push([-1, -1]);
+            } else {
+                golferId = golfersCache.splice(id, 1)[0];
             }
+            golfersCache.splice(0, 0, golferId);
         }
+
+        // info
+        const info = infos[golferId];
+        const newGolfer = info[0] == -1;
+
+        // lang
+        const newLang = newGolfer || reader.read(1);
+        const lang = newLang ? info[0] = langsReader.read(reader) : info[0];
+
+        // hole
+        const newHole = newGolfer || !newLang || reader.read(1);
+        const hole = newHole ? info[1] = holesReader.read(reader) : info[1];
+
+        // size
+        const size = reader.readLong(7) + 1;
+
+        // timeDiff
+        submitted += reader.readLong(3);
+
+        if (solutions.length == hole)
+            solutions.push((solutions[0] || []).map(_ => []));
+        if (solutions[0].length == lang)
+            solutions.forEach(solutions_h => solutions_h.push([]));
+        solutions[hole][lang].push([golferId, size, submitted]);
     }
 
-    return new Model(solutions, holes, langs, golfers, lastSubmitted);
+    return new Model(solutions, holesReader.arr, langsReader.arr, golfers, submitted);
 }
