@@ -39,7 +39,7 @@ class NumberPickerRow {
 
     _getSliderValue() {
         const value = this.slider.valueAsNumber;
-        return value == 0 ? 1 : value == 96 ? Infinity : Math.pow(2, value / 16);
+        return value == 0 ? 1 : value == 96 ? Infinity : Math.round(Math.pow(2, value / 16) * 100) / 100;
     }
 
     _setSliderValue(value) {
@@ -56,6 +56,8 @@ class NumberPickerRow {
     }
 
     setValue(value) {
+        if (this._value == value)
+            return;
         this._value = value;
         this._setButtonValue(value);
         this._setSliderValue(value);
@@ -136,7 +138,9 @@ let modalRow;
 function openNumberPicker(row, value) {
     modalRow = row;
     $("modalHeader").textContent = row.header;
-    $("modalValue").value = value;
+    const input = $("modalValue");
+    input.value = value;
+    valueChangedNumberPicker(input);
     openModal($("numberPicker"));
 }
 

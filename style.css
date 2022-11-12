@@ -36,6 +36,7 @@
 
 .ranking-table {
     border-collapse: collapse;
+    white-space: nowrap;
 }
 
 .ranking-table td,
