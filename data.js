@@ -1,9 +1,21 @@
-const _dbVersion = 2;
+const _dbVersion = 3;
+
+function indexField(data, field) {
+    let count = 0;
+    const valueToId = new Map();
+    for (const item of data) {
+        const value = item[field];
+        let id = valueToId.get(value);
+        if (id == undefined) {
+            id = count++;
+            valueToId.set(value, id);
+        }
+        item[field] = id;
+    }
+    return [...valueToId.keys()];
+}
 
 function packModel(json) {
-    const holes = new EnumWriter();
-    const langs = new EnumWriter();
-
     const sols = json.filter(sol => sol.scoring === "bytes");
 
     for (const sol of sols) {
@@ -11,33 +23,49 @@ function packModel(json) {
     }
     sols.sort((a, b) => a.submitted - b.submitted);
 
+    const langsNames = indexField(sols, "lang");
+    const holesNames = indexField(sols, "hole");
+    const golfersNames = indexField(sols, "login");
+
+    const langsCount = langsNames.length;
+    const bests = Array(langsCount * holesNames.length).fill(Infinity);
+    for (const sol of sols) {
+        const key = sol.hole * langsCount + sol.lang;
+        if (bests[key] > sol.bytes)
+            bests[key] = sol.bytes;
+    }
+
     const writer = new Writer();
-    writer.writeShort(_dbVersion);
-    writer.writeLong(sols.length, 7);
+    writer.writeLong(_dbVersion, 0);
 
     const golfersCache = [];
     let prevTime = 0;
-    const infos = new Map();
+    const infos = [];
 
+    const langsWriter = DynamicHuffmanWriter.fromList(project(sols, "lang"));
+    const holesWriter = DynamicHuffmanWriter.fromList(project(sols, "hole"));
+    const golfersWriter = new StringHuffmanWriter(writer, golfersNames);
+
+    writer.writeLong(sols.length, 16);
     for (const sol of sols) {
         // info
         const g = sol.login;
-        let info = infos.get(g);
+        let info = infos[g];
         let newGolfer = info == undefined;
         if (newGolfer) {
-            infos.set(g, info = [-1, -1]);
+            infos.push(info = [-1, -1]);
         }
 
         // golfer
-        const id = newGolfer || golfersCache.indexOf(g);
+        const id = newGolfer || golfersCache.length - 1 - golfersCache.lastIndexOf(g);
         writer.write(id != 0, 1);
         if (id != 0) {
             writer.writeLong(newGolfer ? 0 : id, 3);
             if (newGolfer)
-                writer.writeString(g);
+                golfersWriter.write(writer, golfersNames[g]);
             else
-                golfersCache.splice(id, 1);
-            golfersCache.splice(0, 0, g);
+                golfersCache.splice(golfersCache.length - 1 - id, 1);
+            golfersCache.push(g);
         }
 
         // lang
@@ -45,7 +73,7 @@ function packModel(json) {
         if (!newGolfer)
             writer.write(newLang, 1);
         if (newLang) {
-            langs.write(writer, info[0] = sol.lang);
+            langsWriter.write(writer, info[0] = sol.lang);
         }
 
         // hole
@@ -53,16 +81,31 @@ function packModel(json) {
         if (!newGolfer && newLang)
             writer.write(newHole, 1);
         if (newHole) {
-            holes.write(writer, info[1] = sol.hole);
+            holesWriter.write(writer, info[1] = sol.hole);
         }
 
         // size
-        writer.writeLong(sol.bytes - 1, 7);
+        writer.writeLong(sol.bytes - bests[sol.hole * langsCount + sol.lang], 5);
 
         // timeDiff
         const curTime = sol.submitted;
         writer.writeLong(curTime - prevTime, 3);
         prevTime = curTime;
+    }
+
+    for (const best of bests) {
+        if (best != Infinity)
+            writer.writeLong(best - 1, 7);
+    }
+
+    const stringWriter = new StringHuffmanWriter(writer, langsNames, holesNames);
+
+    for (const lang of langsNames) {
+        stringWriter.write(writer, lang);
+    }
+
+    for (const hole of holesNames) {
+        stringWriter.write(writer, hole);
     }
 
     return writer.toString();
@@ -71,14 +114,15 @@ function packModel(json) {
 function unpackModel(s) {
     const reader = new Reader(s);
 
-    const dbVersion = reader.readShort();
+    const dbVersion = reader.readLong(0);
     if (dbVersion != _dbVersion) {
         console.log("Found version " + dbVersion + ", expected version " + _dbVersion);
         return null;
     }
 
-    const holesReader = new EnumReader();
-    const langsReader = new EnumReader();
+    const holesReader = new DynamicHuffmanReader();
+    const langsReader = new DynamicHuffmanReader();
+    const golfersReader = new StringHuffmanReader(reader);
 
     const golfers = [];
     const golfersCache = [];
@@ -87,22 +131,22 @@ function unpackModel(s) {
 
     const solutions = [];
 
-    for (let solsCount = reader.readLong(7); solsCount > 0; solsCount--) {
+    for (let solsCount = reader.readLong(16); solsCount > 0; solsCount--) {
         // golfer
         const otherGolfer = reader.read(1);
         let golferId;
         if (!otherGolfer) {
-            golferId = golfersCache[0];
+            golferId = golfersCache[golfersCache.length - 1];
         } else {
             const id = reader.readLong(3);
             if (id == 0) {
                 golferId = golfers.length;
-                golfers.push(reader.readString());
+                golfers.push(golfersReader.read(reader));
                 infos.push([-1, -1]);
             } else {
-                golferId = golfersCache.splice(id, 1)[0];
+                golferId = golfersCache.splice(golfersCache.length - 1 - id, 1)[0];
             }
-            golfersCache.splice(0, 0, golferId);
+            golfersCache.push(golferId);
         }
 
         // info
@@ -118,7 +162,7 @@ function unpackModel(s) {
         const hole = newHole ? info[1] = holesReader.read(reader) : info[1];
 
         // size
-        const size = reader.readLong(7) + 1;
+        const size = reader.readLong(5);
 
         // timeDiff
         submitted += reader.readLong(3);
@@ -130,5 +174,20 @@ function unpackModel(s) {
         solutions[hole][lang].push([golferId, size, submitted]);
     }
 
-    return new Model(solutions, holesReader.arr, langsReader.arr, golfers, submitted);
+    for (const solutions_h of solutions) {
+        for (const solutions_hl of solutions_h) {
+            if (solutions_hl.length == 0)
+                continue;
+            const best = reader.readLong(7) + 1;
+            for (const solution of solutions_hl) {
+                solution[1] += best;
+            }
+        }
+    }
+
+    const stringReader = new StringHuffmanReader(reader);
+    const langs = solutions[0].map(_ => stringReader.read(reader));
+    const holes = solutions.map(_ => stringReader.read(reader));
+
+    return new Model(solutions, holes, langs, golfers, submitted);
 }

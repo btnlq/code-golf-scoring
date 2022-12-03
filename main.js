@@ -52,8 +52,8 @@ function init(packed) {
     $("modelState").textContent =
         "Langs: " + model.langs.length +
         ". Holes: " + model.holes.length +
-        ". Golfers: " + model.golfers.length +
-        ". Solutions: " + sum(model.solutions.map(solutions_h => sum(solutions_h.map(solutions_hl => solutions_hl.length)))) +
+        ". Golfers: " + prettyNumber(model.golfers.length) +
+        ". Solutions: " + prettyNumber(sum(model.solutions.map(solutions_h => sum(solutions_h.map(solutions_hl => solutions_hl.length))))) +
         "\nLast submitted solution: " + prettyDate(model.lastSubmitted)[0];
 
     init_rankings();
@@ -63,20 +63,25 @@ function openModal(modal) {
     modal.style.display = "block";
 }
 
-function showTab(tab) {
-    $("rankingsButton").classList.remove("active");
-    $("heatMapButton").classList.remove("active");
-    $("golferInfoButton").classList.remove("active");
-    $(tab + "Button").classList.add("active");
+function _showTab(activeTab, ...tabs) {
+    for (const tab of tabs) {
+        const isActive = tab == activeTab;
+        $(tab + "Button").classList.toggle("active", isActive);
+        $(tab + "Tab").style.display = isActive ? "" : "none";
+    }
+}
 
+function showTab(tab) {
+    _showTab(tab, "rankings", "heatMap", "golferInfo");
     if (tab == "heatMap")
         initHeatMap();
-
-    $("rankingsTab").style.display = "none";
-    $("heatMapTab").style.display = "none";
-    $("golferInfoTab").style.display = "none";
-    $(tab + "Tab").style.display = "";
 }
+
+function showGolferTab(tab) {
+    _showTab(tab, "solutions", "languages");
+}
+
+function prettyNumber(n) { return n.toLocaleString("en-US"); }
 
 const dtf = new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 

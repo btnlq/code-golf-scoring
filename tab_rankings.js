@@ -1,8 +1,8 @@
-let holeRow, langRow;
+let _holeRow, _langRow;
 
 function load_rankings() {
-    holeRow = new NumberPickerRow($("holeCoefficientRow"), changed);
-    langRow = new NumberPickerRow($("langCoefficientRow"), changed);
+    _holeRow = new NumberPickerRow($("holeCoefficientRow"), changed);
+    _langRow = new NumberPickerRow($("langCoefficientRow"), changed);
 }
 
 function init_rankings() {
@@ -73,8 +73,8 @@ class NumberPickerRow {
 function visible(el, value) { el.style.visibility = value ? "" : "collapse"; }
 
 function changed() {
-    const holeScoring = holeRow.getScoring();
-    const langScoring = langRow.getScoring();
+    const holeScoring = _holeRow.getScoring();
+    const langScoring = _langRow.getScoring();
 
     const isGolfers = $("radioGolfers").checked;
     const h = Number($("holeSelect").value);
@@ -118,9 +118,9 @@ function changed() {
         row.insertCell().innerText = realPlace;
         row.insertCell().innerText = participant;
         row.insertCell().innerText = score.toFixed(2);
-        row.insertCell().innerText = bytes.toLocaleString("en-US");
+        row.insertCell().innerText = prettyNumber(bytes);
         if (displayCount) {
-            const countText = count.toLocaleString("en-US");
+            const countText = prettyNumber(count);
             const cell = row.insertCell();
             if (missing && missing.length > 0) {
                 cell.innerText = missing.join(", ");

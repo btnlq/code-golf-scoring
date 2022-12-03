@@ -76,7 +76,7 @@
                 </td>
             </tr>
         </table>
-        <table id="scoring" class="ranking-table">
+        <table id="scoring" class="ranking-table scoring">
             <thead>
                 <tr>
                     <th>#</th>
@@ -136,48 +136,71 @@
     </div>
     <div id="golferInfoTab" style="display: none">
         <div class="row">
-            <input id="golfer" placeholder="Login" list="golfers" oninput="wallChanged(true)">
+            <input id="golfer" placeholder="Login" list="golfers" oninput="golferChanged()">
             <datalist id="golfers"></datalist>
             <span id="golferLogin"></span>
         </div>
-        <div class="row">
-            <select id="wallHoleSelect" onchange="wallChanged()">
-                <option value="-1">All holes</option>
-            </select>
-            <select id="wallLangSelect" onchange="wallChanged()">
-                <option value="-1">All langs</option>
-            </select>
-            <span id="solutionsCount"></span>
+        <div class="row tabs">
+            <button id="solutionsButton" class="active" onclick="showGolferTab('solutions')">Solutions</button>
+            <button id="languagesButton" onclick="showGolferTab('languages')">Languages</button>
         </div>
-        <div class="row">
-            <label class="radio">
-                <input type="radio" name="wallOrder" id="radioNew" onchange="wallChanged()" checked>New
-            </label>
-            <label class="radio">
-                <input type="radio" name="wallOrder" id="radioOld" onchange="wallChanged()">Old
-            </label>
-            <label class="radio">
-                <input type="radio" name="wallOrder" id="radioBest" onchange="wallChanged()">Best
-            </label>
-            <label class="radio">
-                <input type="radio" name="wallOrder" id="radioWorst" onchange="wallChanged()">Worst
-            </label>
+        <div id="solutionsTab">
+            <div class="row">
+                <select id="wallHoleSelect" onchange="updateWall()">
+                    <option value="-1">All holes</option>
+                </select>
+                <select id="wallLangSelect" onchange="updateWall()">
+                    <option value="-1">All langs</option>
+                </select>
+                <span id="solutionsCount"></span>
+            </div>
+            <div class="row">
+                <label class="radio">
+                    <input type="radio" name="wallOrder" id="radioNew" onchange="updateWall()" checked>New
+                </label>
+                <label class="radio">
+                    <input type="radio" name="wallOrder" id="radioOld" onchange="updateWall()">Old
+                </label>
+                <label class="radio">
+                    <input type="radio" name="wallOrder" id="radioBest" onchange="updateWall()">Best
+                </label>
+                <label class="radio">
+                    <input type="radio" name="wallOrder" id="radioWorst" onchange="updateWall()">Worst
+                </label>
+            </div>
+            <table id="golferWall" class="ranking-table" style="display: none">
+                <thead>
+                    <tr>
+                        <th>Submitted</th>
+                        <th id="wallHoleColumn">Hole</th>
+                        <th id="wallLangColumn">Language</th>
+                        <th>Bytes</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
         </div>
-        <table id="golferWall" class="ranking-table" style="display: none">
-            <thead>
-                <tr>
-                    <th>Submitted</th>
-                    <th id="wallHoleColumn">Hole</th>
-                    <th id="wallLangColumn">Language</th>
-                    <th>Bytes</th>
-                    <th>Points</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+        <div id="languagesTab" style="display: none">
+            <table id="golferLanguages" class="ranking-table scoring">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Language</th>
+                        <th>Points</th>
+                        <th>Bytes</th>
+                        <th>Sols</th>
+                        <th>Submitted</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
     </div>
     <script src="bit.js"></script>
+    <script src="huffman.js"></script>
     <script src="model.js"></script>
     <script src="utils.js"></script>
     <script src="data.js"></script>

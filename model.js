@@ -136,10 +136,10 @@ class Model {
         for (const l of this.langs.keys()) {
             const bestSolutions_l = [...project(this.bestSolutions, l)];
             const missingHoles = [...this.holes.keys()].filter(h => bestSolutions_l[h][0] == undefined).map(h => this.prettyHoles[h]).sort();
-            const bytes_l = sum(project(bestSolutions_l, 1));
+            const size_l = sum(project(bestSolutions_l, 1));
             const submitted_l = max(project(bestSolutions_l, 2));
             const score_l = holeScoring(project(bestSolutions_l, 3));
-            scores.push([l, bytes_l, submitted_l, score_l, this.holes.length - missingHoles.length, missingHoles]);
+            scores.push([l, size_l, submitted_l, score_l, this.holes.length - missingHoles.length, missingHoles]);
         };
         return [scores, holeScoring(this.holes.map(() => 1))];
     }
@@ -163,5 +163,24 @@ class Model {
         const holes = sortedHs.map(h => this.prettyHoles[h]);
         const langs = sortedLs.map(l => this.prettyLangs[l]);
         return { map, holes, langs };
+    }
+
+    golferLanguages(golferId) {
+        const scores = [];
+        for (const l of model.langs.keys()) {
+            let score = 0, size = 0, count = 0, submitted = 0;
+            for (const h of model.holes.keys())
+                for (const sol of model.solutions[h][l])
+                    if (sol[0] == golferId) {
+                        size += sol[1];
+                        count++;
+                        submitted = Math.max(sol[2], submitted);
+                        score += model.bestSolutions[h][l][1] / sol[1];
+                    }
+            if (count) {
+                scores.push([l, size, submitted, score, count]);
+            }
+        }
+        return this._pretty([scores, 1], this.prettyLangs);
     }
 }
