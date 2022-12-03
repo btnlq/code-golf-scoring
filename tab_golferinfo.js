@@ -51,18 +51,14 @@ function findGolfers(prefix, limit) {
 function updateWall() {
     const selectedH = Number($("wallHoleSelect").value);
     const allHoles = selectedH == -1;
-    display($("wallHoleColumn"), allHoles);
 
     const selectedL = Number($("wallLangSelect").value);
     const allLangs = selectedL == -1;
-    display($("wallLangColumn"), allLangs);
 
-    const table = $("golferWall");
-    display(table, _golfer);
-    const body = table.tBodies[0];
+    const table = new Table($("golferWall"));
 
     if (!_golfer) {
-        body.innerHTML = "";
+        table.render();
         $("golferLogin").textContent = "";
         $("solutionsCount").textContent = "";
         return;
@@ -86,50 +82,36 @@ function updateWall() {
     solutions.sort(compareFn);
     if (solutions.length > 100)
         solutions.length = 100;
+    
+    // data = [h, l, bytes, submitted, score]
+    table.add("Submitted", Table.date(data => data[3]));
+    if (allHoles)
+        table.add("Hole", Table.text(data => model.prettyHoles[data[0]]), true);
+    if (allLangs)
+        table.add("Language", Table.text(data => model.prettyLangs[data[1]]), true);
+    table.add("Bytes", Table.text(data => prettyNumber(data[2])));
+    table.add("Points", Table.text(data => (1000 * data[4]).toFixed()));
 
-    body.innerHTML = "";
-    for (const [h, l, bytes, submitted, score] of solutions) {
-        const row = body.insertRow();
-
-        const [fullText, prettyText] = prettyDate(submitted);
-        row.insertCell().innerHTML = `<span title="${fullText}">${prettyText}</span>`;
-
-        if (allHoles)
-            row.insertCell().innerText = model.prettyHoles[h];
-        else
-            row.insertCell().style.display = "none";
-        if (allLangs)
-            row.insertCell().innerText = model.prettyLangs[l];
-        else
-            row.insertCell().style.display = "none";
-        row.insertCell().innerText = prettyNumber(bytes);
-
-        row.insertCell().innerText = (1000 * score).toFixed();
-    }
+    table.render(solutions);
 }
 
 function updateGolferLanguages() {
-    const body = $("golferLanguages").tBodies[0];
-    body.innerHTML = "";
+    const table = new Table($("golferLanguages"));
 
-    if (!_golfer)
+    if (!_golfer) {
+        table.render();
         return;
+    }
 
     const scores = model.golferLanguages(_golfer);
 
-    let place = 0, realPlace = 0, prevScore = -1;
-    for (const [participant, bytes, submitted, score, count] of scores) {
-        place++; if (score != prevScore) realPlace = place, prevScore = score;
+    // data = [participant, bytes, submitted, score, count]
+    table.add("#", Table.place(data => data[3]));
+    table.add("Language", Table.text(data => data[0]), true);
+    table.add("Points", Table.text(data => prettyNumber(Math.round(data[3]))));
+    table.add("Bytes", Table.text(data => prettyNumber(data[1])));
+    table.add("Sols", Table.text(data => data[4]));
+    table.add("Submitted", Table.date(data => data[2]));
 
-        const row = body.insertRow();
-
-        row.insertCell().innerText = realPlace;
-        row.insertCell().innerText = participant;
-        row.insertCell().innerText = prettyNumber(Math.round(score));
-        row.insertCell().innerText = prettyNumber(bytes);
-        row.insertCell().innerText = count;
-
-        const [fullText, prettyText] = prettyDate(submitted);
-        row.insertCell().innerHTML = `<span title="${fullText}">${prettyText}</span>`;
-    }
+    table.render(scores);
 }

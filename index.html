@@ -76,20 +76,9 @@
                 </td>
             </tr>
         </table>
-        <table id="scoring" class="ranking-table scoring">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th id="participantColumn">Golfer</th>
-                    <th>Points</th>
-                    <th>Bytes</th>
-                    <th id="solsColumn">Sols</th>
-                    <th>Submitted</th>
-                    <th id="langGolferColumn" style="display: none">Golfer</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
+        <table id="scoring" class="ranking-table">
+            <thead></thead>
+            <tbody></tbody>
         </table>
         <div id="numberPicker" class="modal">
             <div class="modal-content">
@@ -168,34 +157,15 @@
                     <input type="radio" name="wallOrder" id="radioWorst" onchange="updateWall()">Worst
                 </label>
             </div>
-            <table id="golferWall" class="ranking-table" style="display: none">
-                <thead>
-                    <tr>
-                        <th>Submitted</th>
-                        <th id="wallHoleColumn">Hole</th>
-                        <th id="wallLangColumn">Language</th>
-                        <th>Bytes</th>
-                        <th>Points</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
+            <table id="golferWall" class="ranking-table">
+                <thead></thead>
+                <tbody></tbody>
             </table>
         </div>
         <div id="languagesTab" style="display: none">
-            <table id="golferLanguages" class="ranking-table scoring">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Language</th>
-                        <th>Points</th>
-                        <th>Bytes</th>
-                        <th>Sols</th>
-                        <th>Submitted</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
+            <table id="golferLanguages" class="ranking-table">
+                <thead></thead>
+                <tbody></tbody>
             </table>
         </div>
     </div>
@@ -204,6 +174,7 @@
     <script src="model.js"></script>
     <script src="utils.js"></script>
     <script src="data.js"></script>
+    <script src="table.js"></script>
     <script src="main.js"></script>
     <script src="tab_rankings.js"></script>
     <script src="tab_heatmap.js"></script>

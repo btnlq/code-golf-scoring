@@ -70,8 +70,6 @@ class NumberPickerRow {
     }
 }
 
-function visible(el, value) { el.style.visibility = value ? "" : "collapse"; }
-
 function changed() {
     const holeScoring = _holeRow.getScoring();
     const langScoring = _langRow.getScoring();
@@ -80,17 +78,9 @@ function changed() {
     const h = Number($("holeSelect").value);
     const l = Number($("langSelect").value);
 
-    display($("langSelect"), isGolfers);
-    visible($("holeCoefficientRow"), h == -1);
-    visible($("langCoefficientRow"), isGolfers && l == -1);
-
-    const displayCount = isGolfers ? l == -1 || h == -1 : h == -1;
-    const displayGolfer = !isGolfers && h != -1;
-
-    $("participantColumn").textContent = isGolfers ? "Golfer" : "Language";
-    $("solsColumn").textContent = isGolfers ? "Sols" : "Holes";
-    display($("solsColumn"), displayCount);
-    display($("langGolferColumn"), displayGolfer);
+    $("langSelect").style.display = isGolfers ? "" : "none";
+    $("holeCoefficientRow").style.visibility = h == -1 ? "" : "collapse";
+    $("langCoefficientRow").style.visibility = isGolfers && l == -1 ? "" : "collapse";
 
     if (model == undefined) {
         console.log("Model is not loaded");
@@ -106,39 +96,31 @@ function changed() {
         model.golfersRanking(h == -1 ? holeScoring : h, l == -1 ? langScoring : l) :
         model.langsRanking(h == -1 ? holeScoring : h);
 
-    const body = $("scoring").tBodies[0];
-    body.innerHTML = "";
+    const table = new Table($("scoring"));
 
-    let place = 0, realPlace = 0, prevScore = -1;
-    for (const [participant, bytes, submitted, score, count, missing] of scores) {
-        place++; if (score != prevScore) realPlace = place, prevScore = score;
-
-        const row = body.insertRow();
-
-        row.insertCell().innerText = realPlace;
-        row.insertCell().innerText = participant;
-        row.insertCell().innerText = score.toFixed(2);
-        row.insertCell().innerText = prettyNumber(bytes);
-        if (displayCount) {
-            const countText = prettyNumber(count);
-            const cell = row.insertCell();
+    // data = [participant, bytes, submitted, score, count / best golfer, missing holes]
+    table.add("#", Table.place(data => data[3]));
+    table.add(isGolfers ? "Golfer" : "Language", Table.text(data => data[0]), true);
+    table.add("Points", Table.text(data => data[3].toFixed(2)));
+    table.add("Bytes", Table.text(data => prettyNumber(data[1])));
+    if (isGolfers ? l == -1 || h == -1 : h == -1) {
+        table.add(isGolfers ? "Sols" : "Holes", (cell, data) => {
+            const countText = prettyNumber(data[4]);
+            const missing = data[5];
             if (missing && missing.length > 0) {
                 cell.innerText = missing.join(", ");
                 cell.innerHTML = '<div class="tooltip">' + countText + '<span class="tooltiptext">' + cell.innerHTML + '</span></div>';
             } else {
                 cell.innerText = countText;
             }
-        } else {
-            row.insertCell().style.display = "none";
-        }
-
-        const [fullText, prettyText] = prettyDate(submitted);
-        row.insertCell().innerHTML = `<span title="${fullText}">${prettyText}</span>`;
-
-        if (displayGolfer) {
-            row.insertCell().innerText = count;
-        }
+        });
     }
+    table.add("Submitted", Table.date(data => data[2]));
+    if (!isGolfers && h != -1) {
+        table.add("Golfer", Table.text(data => data[4]), true);
+    }
+
+    table.render(scores);
 }
 
 let modalRow;

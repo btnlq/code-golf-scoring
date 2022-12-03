@@ -1,5 +1,4 @@
 function $(el) { return document.getElementById(el); }
-function display(el, value) { el.style.display = value ? "" : "none"; }
 
 function updateModelFromFile(input) {
     const file = input.files[0];

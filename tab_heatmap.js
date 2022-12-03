@@ -1,7 +1,8 @@
 function addTh(row, text) {
-    const cell = row.insertCell();
-    cell.textContent = text;
-    cell.outerHTML = "<th>" + cell.innerHTML + "</th>";
+    const cell = document.createElement("th");
+    cell.innerText = text;
+    row.appendChild(cell);
+    return cell;
 }
 
 function initHeatMap() {

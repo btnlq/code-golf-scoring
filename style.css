@@ -1,41 +1,5 @@
 /* Tables */
 
-.scoring td:nth-child(2), /* Golfer/Language */
-.scoring th:nth-child(2),
-.scoring td:nth-child(7), /* Best golfer */
-.scoring th:nth-child(7) {
-    text-align: start;
-}
-
-.scoring td:nth-child(1), /* # */
-.scoring th:nth-child(1),
-.scoring td:nth-child(3), /* Points */
-.scoring th:nth-child(3),
-.scoring td:nth-child(4), /* Bytes */
-.scoring th:nth-child(4),
-.scoring td:nth-child(5), /* Sols/Holes */
-.scoring th:nth-child(5),
-.scoring td:nth-child(6), /* Submitted */
-.scoring th:nth-child(6) {
-    text-align: end;
-}
-
-#golferWall td:nth-child(2),
-#golferWall th:nth-child(2),
-#golferWall td:nth-child(3),
-#golferWall th:nth-child(3) {
-    text-align: start;
-}
-
-#golferWall td:nth-child(1),
-#golferWall th:nth-child(1),
-#golferWall td:nth-child(4),
-#golferWall th:nth-child(4),
-#golferWall td:nth-child(5),
-#golferWall th:nth-child(5) {
-    text-align: end;
-}
-
 .ranking-table {
     border-collapse: collapse;
     white-space: nowrap;
@@ -43,9 +7,14 @@
 
 .ranking-table td,
 .ranking-table th {
+    text-align: end;
     padding-right: 10px;
     padding-top: 2px;
     padding-bottom: 2px;
+}
+
+.ranking-table .left {
+    text-align: start;
 }
 
 /* Tooltip */
